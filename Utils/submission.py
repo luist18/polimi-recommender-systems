@@ -1,5 +1,8 @@
-from Data.RecSys2022 import RecSys2022
+import os
+
 import pandas as pd
+
+from Data.RecSys2022 import RecSys2022
 
 
 def create_submission(dataset: RecSys2022, model):
@@ -24,3 +27,12 @@ def create_submission(dataset: RecSys2022, model):
 
     # dataframe with user_ids and recommended items
     return pd.DataFrame({'user_id': user_ids, 'item_list': predicts})
+
+def save_submission(dataset: RecSys2022, model, filename):
+    # check if model_results folder exists
+    if not os.path.exists('model_results'):
+        os.makedirs('model_results')
+        
+    submission = create_submission(dataset, model)
+    submission.to_csv(os.path.join('model_results', filename), index=False)
+    

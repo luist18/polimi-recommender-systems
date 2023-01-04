@@ -187,8 +187,6 @@ class RecSys2022:
         self.urm = urm
         self.urm_type = type
 
-        print(interactions.head(5))
-
         pd.options.mode.chained_assignment = previous_mode
 
     def get_icm(self):
