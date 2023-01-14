@@ -24,7 +24,7 @@ class RecSys2022:
     DATASET_DIR = 'assets'
     DATASET_NAME = 'recommender-system-2022-challenge-polimi.zip'
 
-    def __init__(self):
+    def __init__(self, feature_dummies=True):
         # converts to absolute path
         self.dataset_dir = os.path.join(
             os.path.dirname(__file__), RecSys2022.DATASET_DIR)
@@ -37,7 +37,7 @@ class RecSys2022:
         self._unzip()
 
         self.interactions = self._load_interactions()
-        self.features = self._load_features()
+        self.features = self._load_features(feature_dummies)
         self.target_ids = self._load_target_ids()
 
         # assigned to a value during the build method
@@ -76,7 +76,7 @@ class RecSys2022:
 
         return interactions
 
-    def _load_features(self):
+    def _load_features(self, feature_dummies=True):
         print('Loading features...')
 
         length_path = os.path.join(
@@ -90,8 +90,15 @@ class RecSys2022:
         )
 
         length_features, length_archive = utils.load_length_feature(
-            length_path)
-        type_features = utils.load_type_feature(type_path)
+            length_path, dummies=feature_dummies)
+        type_features = utils.load_type_feature(
+            type_path, dummies=feature_dummies)
+
+        if not feature_dummies:
+            length_max = length_features['feature_id'].max()
+
+            type_features['feature_id'] = type_features['feature_id'] + \
+                length_max + 1
 
         features = pd.merge(length_features,
                             type_features, on='item_id')

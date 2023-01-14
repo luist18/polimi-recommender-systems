@@ -15,3 +15,4 @@ jupyter-contrib-nbextensions==0.5.1
 tensorflow==2.8.0
 tables==3.7.0
 implicit==0.6.2
+similaripy==0.1.3

@@ -143,7 +143,7 @@ def one_checking_one_to_two_viewing(res, length_archive, cap=True):
     return res
 
 
-def load_length_feature(path):
+def load_length_feature(path, dummies=True):
     # load length features
     length_features = pd.read_csv(path)
 
@@ -157,19 +157,25 @@ def load_length_feature(path):
     length_features['length'] = length_features['length'].apply(
         lambda x: 0 if x == 1.0 else 1 if x <= 3.0 else 2 if x <= 10.0 else 3 if x <= 27.0 else 4 if x <= 55.0 else 5)
 
-    length_features = pd.get_dummies(length_features, columns=['length'])
+    if dummies:
+        length_features = pd.get_dummies(length_features, columns=['length'])
+    else:
+        length_features.rename(columns={'length': 'feature_id'}, inplace=True)
 
     return length_features, length_archive
 
 
-def load_type_feature(path):
+def load_type_feature(path, dummies=True):
     # load types
     type_features = pd.read_csv(path)
 
     type_features = type_features.drop(
         columns=['data']).rename(columns={'feature_id': 'type'})
 
-    type_features = pd.get_dummies(type_features, columns=['type'])
+    if dummies:
+        type_features = pd.get_dummies(type_features, columns=['type'])
+    else:
+        type_features.rename(columns={'type': 'feature_id'}, inplace=True)
 
     return type_features
 
