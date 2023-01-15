@@ -7,6 +7,7 @@ from Data.RecSys2022 import RecSys2022, RecSys2022URMType
 from Data_manager.split_functions.split_train_validation_random_holdout import \
     split_train_in_two_percentage_global_sample
 from Evaluation.Evaluator import EvaluatorHoldout
+from Evaluator import Evaluator
 
 
 def __has_icm(model_class):
@@ -40,7 +41,7 @@ def run_algorithm(model_class, fit_params={}, urm_type=RecSys2022URMType.DEFAULT
         dataset, model, f'{model.__class__.__name__}.csv')
 
 
-def test_algorithm(model_class, fit_params={}, urm_type=RecSys2022URMType.DEFAULT, dummies=True):
+def test_algorithm(model_class, fit_params={}, urm_type=RecSys2022URMType.DEFAULT, dummies=True, split_size=0.8):
     dataset = RecSys2022(feature_dummies=dummies)
     dataset.build(type=RecSys2022URMType.ONE_INTERACTED)
 
@@ -50,9 +51,10 @@ def test_algorithm(model_class, fit_params={}, urm_type=RecSys2022URMType.DEFAUL
     urm_type = dataset.get_urm_type()
 
     urm_train, urm_validation = split_train_in_two_percentage_global_sample(
-        urm, train_percentage=0.8)
+        urm, train_percentage=split_size)
 
     evaluator_validation = EvaluatorHoldout(urm_validation, cutoff_list=[10])
+    evaluator_own = Evaluator(urm_validation)
 
     print('Dataset loaded successfully with URM type:', urm_type.name)
 
@@ -72,3 +74,4 @@ def test_algorithm(model_class, fit_params={}, urm_type=RecSys2022URMType.DEFAUL
 
     map_value = result_df.loc[10]["MAP"]
     print(f'MAP@10: {map_value:.7f}')
+    print(f'MAP@10 ev2: {evaluator_own.calculate_map(model):.7f}')
