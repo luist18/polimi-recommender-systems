@@ -14,7 +14,7 @@ def load_interactions(path):
     return res
 
 
-def sum_all_interactions(res, scale=True):
+def sum_all_interactions(res, scale=False):
     # summing all interactions
     res['data'] = 1
     res['data'] = res.groupby(['user_id', 'item_id', 'data'])[
@@ -41,6 +41,7 @@ def sum_all_interactions(res, scale=True):
 def one_interacted(res):
     # set all interactions to 1
     res['data'] = 1
+
     res = res.drop_duplicates(
         ['user_id', 'item_id', 'data']).reset_index(drop=True)
 

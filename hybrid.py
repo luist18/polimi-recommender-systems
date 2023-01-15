@@ -31,34 +31,43 @@ class Hybrid(BaseRecommender):
 
         # Fit the recommenders
         self.Beta.fit(alpha=0.719514, beta=0.229898, min_rating=0, topK=80, implicit=True, normalize_similarity=True)
-        self.Slim.fit(topK=25000, l1_ratio=1.0, alpha=2e-4, workers=8)
+        self.Slim.fit(topK=25000, l1_ratio=1.0, alpha=2e-4, workers=4)
 
-    def fit(self, norm=2, epsilon=0.5, gamma=0.3):
+    def fit(self, norm=2, epsilon=0.5, interactions_count=10):
         # Instantiate the recommenders
         self.norm = norm
         self.epsilon = epsilon
-        self.gamma = gamma
+        self.interactions_count = interactions_count
     
     def _compute_item_score(self, user_id_array, items_to_compute = None):
+        n_items = self.URM_train.shape[1]
         
-        # In a simple extension this could be a loop over a list of pretrained recommender objects
-        item_weights_1 = self.Beta._compute_item_score(user_id_array, items_to_compute)
-        item_weights_2 = self.Slim._compute_item_score(user_id_array, items_to_compute)
+        item_weights = np.empty([len(user_id_array), n_items])
+        
+        for i in range(len(user_id_array)):
+            interactions_count = len(self.URM_train[user_id_array[i],:].indices)
+            
+            # In a simple extension this could be a loop over a list of pretrained recommender objects
+            item_weights_1 = self.Beta._compute_item_score(user_id_array[i], items_to_compute)
+            item_weights_2 = self.Slim._compute_item_score(user_id_array[i], items_to_compute)
 
-        norm_item_weights_1 = LA.norm(item_weights_1, self.norm)
-        norm_item_weights_2 = LA.norm(item_weights_2, self.norm)
+            norm_item_weights_1 = LA.norm(item_weights_1, self.norm)
+            norm_item_weights_2 = LA.norm(item_weights_2, self.norm)
 
-        if norm_item_weights_1 == 0:
-            raise ValueError("Norm {} of item weights for recommender 1 is zero. Avoiding division by zero".format(self.norm))
-        
-        if norm_item_weights_2 == 0:
-            zeros = [item for sublist in item_weights_2 for item in sublist]
-            #print("TESTE", all(z == 0 for z in zeros))
-            #print(item_weights_2)
-            norm_item_weights_2 = 1
-            # raise ValueError("Norm {} of item weights for recommender 2 is zero. Avoiding division by zero".format(self.norm))
-        
-        item_weights = item_weights_1 / norm_item_weights_1 * self.epsilon + item_weights_2 / norm_item_weights_2 * (1-self.epsilon)
+            if norm_item_weights_1 == 0:
+                # print("Warning: Norm {} of item weights for recommender 1 is zero. Avoiding division by zero".format(self.norm))
+                norm_item_weights_1 = 1
+                # raise ValueError("Norm {} of item weights for recommender 1 is zero. Avoiding division by zero".format(self.norm))
+            
+            if norm_item_weights_2 == 0:
+                # print("Warning: Norm {} of item weights for recommender 2 is zero. Avoiding division by zero".format(self.norm))
+                norm_item_weights_2 = 1
+                # raise ValueError("Norm {} of item weights for recommender 2 is zero. Avoiding division by zero".format(self.norm))
+            
+            if interactions_count < self.interactions_count:
+                item_weights[i,:] = item_weights_1 / norm_item_weights_1 * self.epsilon + item_weights_2 / norm_item_weights_2 * (1-self.epsilon)
+            else:
+                item_weights[i,:] = item_weights_1 / norm_item_weights_1 * (1-self.epsilon) + item_weights_2 / norm_item_weights_2 * self.epsilon
 
         return item_weights
     
